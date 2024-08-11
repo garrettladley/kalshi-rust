@@ -1,5 +1,3 @@
-use std::marker::PhantomData;
-
 use super::Kalshi;
 use crate::{kalshi_error::*, LoggedIn, LoggedOut};
 use serde::{Deserialize, Serialize};
@@ -43,15 +41,15 @@ impl<'a> Kalshi<LoggedOut> {
             .json()
             .await?;
 
-        self.curr_token = Some(format!("Bearer {}", result.token));
-        self.member_id = Some(result.member_id);
+        let logged_in = LoggedIn {
+            curr_token: format!("Bearer {}", result.token),
+            member_id: result.member_id,
+        };
 
         Ok(Kalshi {
             base_url: self.base_url.clone(),
-            curr_token: self.curr_token.clone(),
-            member_id: self.member_id.clone(),
             client: self.client.clone(),
-            state: PhantomData,
+            state: logged_in,
         })
     }
 }
@@ -75,17 +73,15 @@ impl<'a> Kalshi<LoggedIn> {
 
         self.client
             .post(logout_url)
-            .header("Authorization", self.curr_token.clone().unwrap())
+            .header("Authorization", self.state.curr_token.clone())
             .header("content-type", "application/json".to_string())
             .send()
             .await?;
 
         Ok(Kalshi {
             base_url: self.base_url.clone(),
-            curr_token: None,
-            member_id: None,
             client: self.client.clone(),
-            state: PhantomData,
+            state: LoggedOut,
         })
     }
 }

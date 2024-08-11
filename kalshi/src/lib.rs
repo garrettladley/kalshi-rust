@@ -35,11 +35,11 @@
 //!
 //! Initialize the Kalshi Struct and login using your authentication details:
 //! - **IMPORTANT**:  A user's authentication token expires every thirty minutes, this means
-//! that you'll need to call the login function every thirty minutes in order to
-//! ensure that you remain authenticated with a valid token.
+//!   that you'll need to call the login function every thirty minutes in order to
+//!   ensure that you remain authenticated with a valid token.
 //! - Storing user / password information in plaintext is not recommended,
-//! an implementation of extracting user details from local environmental variables
-//! is available [here](https://github.com/dpeachpeach/kalshi-rust/blob/main/sample_bot/src/main.rs#L12)
+//!   an implementation of extracting user details from local environmental variables
+//!   is available [here](https://github.com/dpeachpeach/kalshi-rust/blob/main/sample_bot/src/main.rs#L12)
 //! ```
 //! use kalshi::Kalshi;
 //! use kalshi::TradingEnvironment;
@@ -123,8 +123,6 @@ mod kalshi_error;
 mod market;
 mod portfolio;
 
-use std::marker::PhantomData;
-
 pub use exchange::*;
 pub use kalshi_error::*;
 pub use market::*;
@@ -134,7 +132,13 @@ pub use portfolio::*;
 pub struct LoggedOut;
 
 #[derive(Debug, Clone)]
-pub struct LoggedIn;
+pub struct LoggedIn {
+    /// - `curr_token`: A field for storing the current authentication token.
+    curr_token: String,
+    #[allow(dead_code)]
+    /// - `member_id`: A field for storing the member ID.
+    member_id: String,
+}
 
 /// The Kalshi struct is the core of the kalshi-crate. It acts as the interface
 /// between the user and the market, abstracting away the meat of requests
@@ -154,13 +158,10 @@ pub struct LoggedIn;
 pub struct Kalshi<State = LoggedOut> {
     /// - `base_url`: The base URL for the API, determined by the trading environment.
     base_url: String,
-    /// - `curr_token`: A field for storing the current authentication token.
-    curr_token: Option<String>,
-    /// - `member_id`: A field for storing the member ID.
-    member_id: Option<String>,
     /// - `client`: The HTTP client used for making requests to the marketplace.
     client: reqwest::Client,
-    state: PhantomData<State>,
+    /// - `state`: TODO
+    state: State,
 }
 
 impl Kalshi {
@@ -188,35 +189,9 @@ impl Kalshi {
     pub fn new(trading_env: TradingEnvironment) -> Kalshi<LoggedOut> {
         Kalshi {
             base_url: utils::build_base_url(trading_env).to_string(),
-            curr_token: None,
-            member_id: None,
             client: reqwest::Client::new(),
-            state: PhantomData,
+            state: LoggedOut,
         }
-    }
-
-    /// Retrieves the current user authentication token, if available.
-    ///
-    /// # Returns
-    ///
-    /// Returns an `Option<String>` containing the authentication token. If no token
-    /// is currently stored, it returns `None`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use kalshi::{Kalshi, TradingEnvironment};
-    /// let kalshi = Kalshi::new(TradingEnvironment::DemoMode);
-    /// let token = kalshi.get_user_token();
-    /// if let Some(t) = token {
-    ///     println!("Current token: {}", t);
-    /// } else {
-    ///     println!("No token found");
-    /// }
-    /// ```
-    ///
-    pub fn get_user_token(&self) -> Option<String> {
-        self.curr_token.clone()
     }
 }
 
