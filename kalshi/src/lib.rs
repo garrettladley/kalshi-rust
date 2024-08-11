@@ -131,10 +131,9 @@ pub use market::*;
 pub use portfolio::*;
 
 #[derive(Debug, Clone)]
-
 pub struct LoggedOut;
-#[derive(Debug, Clone)]
 
+#[derive(Debug, Clone)]
 pub struct LoggedIn;
 
 /// The Kalshi struct is the core of the kalshi-crate. It acts as the interface
