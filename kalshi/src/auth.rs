@@ -1,8 +1,10 @@
+use std::marker::PhantomData;
+
 use super::Kalshi;
-use crate::kalshi_error::*;
+use crate::{kalshi_error::*, LoggedIn, LoggedOut};
 use serde::{Deserialize, Serialize};
 
-impl<'a> Kalshi {
+impl<'a> Kalshi<LoggedOut> {
     /// Asynchronously logs a user into the Kalshi exchange.
     ///
     /// This method sends a POST request to the Kalshi exchange's login endpoint with the user's credentials.
@@ -13,15 +15,19 @@ impl<'a> Kalshi {
     /// * `password` - A string slice representing the user's password.
     ///
     /// # Returns
-    /// - `Ok(())`: Empty result indicating successful login.
+    /// - `Ok(Kalshi<LoggedIn>)`: A Kalshi instance with the user logged in.
     /// - `Err(KalshiError)`: Error in case of a failure in the HTTP request or response parsing.
     ///
     /// # Example
     /// ```
-    /// kalshi_instance.login("johndoe@example.com", "example_password").await?;
+    /// let kalshi_instance = kalshi_instance.login("johndoe@example.com", "example_password").await?;
     /// ```
-    pub async fn login(&mut self, user: &str, password: &str) -> Result<(), KalshiError> {
-        let login_url: &str = &format!("{}/login", self.base_url.to_string());
+    pub async fn login(
+        &mut self,
+        user: &str,
+        password: &str,
+    ) -> Result<Kalshi<LoggedIn>, KalshiError> {
+        let login_url: &str = &format!("{}/login", self.base_url);
 
         let login_payload = LoginPayload {
             email: user.to_string(),
@@ -40,24 +46,32 @@ impl<'a> Kalshi {
         self.curr_token = Some(format!("Bearer {}", result.token));
         self.member_id = Some(result.member_id);
 
-        return Ok(());
+        Ok(Kalshi {
+            base_url: self.base_url.clone(),
+            curr_token: self.curr_token.clone(),
+            member_id: self.member_id.clone(),
+            client: self.client.clone(),
+            state: PhantomData,
+        })
     }
+}
 
+impl<'a> Kalshi<LoggedIn> {
     /// Asynchronously logs a user out of the Kalshi exchange.
     ///
     /// Sends a POST request to the Kalshi exchange's logout endpoint. This method
     /// should be called to properly terminate the session initiated by `login`.
     ///
     /// # Returns
-    /// - `Ok(())`: Empty result indicating successful logout.
+    /// - `Ok(Kalshi<LoggedOut>)`: A Kalshi instance with the user logged out.
     /// - `Err(KalshiError)`: Error in case of a failure in the HTTP request.
     ///
     /// # Examples
     /// ```
     /// kalshi_instance.logout().await?;
     /// ```
-    pub async fn logout(&self) -> Result<(), KalshiError> {
-        let logout_url: &str = &format!("{}/logout", self.base_url.to_string());
+    pub async fn logout(&self) -> Result<Kalshi<LoggedOut>, KalshiError> {
+        let logout_url: &str = &format!("{}/logout", self.base_url);
 
         self.client
             .post(logout_url)
@@ -66,7 +80,13 @@ impl<'a> Kalshi {
             .send()
             .await?;
 
-        return Ok(());
+        Ok(Kalshi {
+            base_url: self.base_url.clone(),
+            curr_token: None,
+            member_id: None,
+            client: self.client.clone(),
+            state: PhantomData,
+        })
     }
 }
 

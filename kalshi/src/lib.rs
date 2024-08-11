@@ -49,7 +49,7 @@
 //!
 //! let mut kalshi_instance = Kalshi::new(TradingEnvironment::DemoMode);
 //!
-//! kalshi_instance.login(username, password).await?;
+//! let kalshi_instance = kalshi_instance.login(username, password).await?;
 //! ```
 //!
 //! After logging in, you can call any method present in the crate without issue.
@@ -123,14 +123,19 @@ mod kalshi_error;
 mod market;
 mod portfolio;
 
-pub use auth::*;
+use std::marker::PhantomData;
+
 pub use exchange::*;
 pub use kalshi_error::*;
 pub use market::*;
 pub use portfolio::*;
 
-// imports
-use reqwest;
+#[derive(Debug, Clone)]
+
+pub struct LoggedOut;
+#[derive(Debug, Clone)]
+
+pub struct LoggedIn;
 
 /// The Kalshi struct is the core of the kalshi-crate. It acts as the interface
 /// between the user and the market, abstracting away the meat of requests
@@ -147,7 +152,7 @@ use reqwest;
 ///
 ///
 #[derive(Debug, Clone)]
-pub struct Kalshi {
+pub struct Kalshi<State = LoggedOut> {
     /// - `base_url`: The base URL for the API, determined by the trading environment.
     base_url: String,
     /// - `curr_token`: A field for storing the current authentication token.
@@ -156,6 +161,7 @@ pub struct Kalshi {
     member_id: Option<String>,
     /// - `client`: The HTTP client used for making requests to the marketplace.
     client: reqwest::Client,
+    state: PhantomData<State>,
 }
 
 impl Kalshi {
@@ -180,13 +186,14 @@ impl Kalshi {
     /// let kalshi = Kalshi::new(TradingEnvironment::LiveMarketMode);
     /// ```
     ///
-    pub fn new(trading_env: TradingEnvironment) -> Kalshi {
-        return Kalshi {
+    pub fn new(trading_env: TradingEnvironment) -> Kalshi<LoggedOut> {
+        Kalshi {
             base_url: utils::build_base_url(trading_env).to_string(),
             curr_token: None,
             member_id: None,
             client: reqwest::Client::new(),
-        };
+            state: PhantomData,
+        }
     }
 
     /// Retrieves the current user authentication token, if available.
@@ -210,10 +217,7 @@ impl Kalshi {
     /// ```
     ///
     pub fn get_user_token(&self) -> Option<String> {
-        match &self.curr_token {
-            Some(val) => return Some(val.clone()),
-            _ => return None,
-        }
+        self.curr_token.clone()
     }
 }
 
