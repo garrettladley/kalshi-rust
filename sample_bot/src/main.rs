@@ -46,8 +46,8 @@ async fn main() {
 
     let (username, password) = retreive_credentials(APIType::Demo).unwrap();
 
-    let mut kalshi_instance = Kalshi::new(kalshi::TradingEnvironment::DemoMode);
-    println!("{:?}", kalshi_instance);
+    let kalshi_instance = Kalshi::new(kalshi::TradingEnvironment::DemoMode);
+
     let kalshi_instance = kalshi_instance.login(&username, &password).await.unwrap();
 
     let new_york_ticker = "HIGHNY-23NOV13-T51".to_string();

@@ -195,6 +195,27 @@ impl Kalshi {
     }
 }
 
+impl Kalshi<LoggedIn> {
+    /// Retrieves the current user authentication token.
+    ///
+    /// # Returns
+    ///
+    /// Returns a string representing the current user authentication token.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use kalshi::{Kalshi, TradingEnvironment};
+    /// let kalshi_instance = kalshi_instance.login("johndoe@example.com", "example_password").await?;
+    /// let token = kalshi_instance.get_user_token();
+    /// println!("Current token: {}", token);
+    /// ```
+    ///
+    pub fn get_user_token(&self) -> String {
+        self.state.curr_token.clone()
+    }
+}
+
 // GENERAL ENUMS
 // -----------------------------------------------
 
