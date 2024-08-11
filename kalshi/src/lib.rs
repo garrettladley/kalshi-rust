@@ -160,7 +160,7 @@ pub struct Kalshi<State = LoggedOut> {
     base_url: String,
     /// - `client`: The HTTP client used for making requests to the marketplace.
     client: reqwest::Client,
-    /// - `state`: TODO
+    /// - `state`: The state of the Kalshi instance, either logged in or logged out.
     state: State,
 }
 
